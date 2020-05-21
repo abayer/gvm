@@ -159,8 +159,15 @@ gvm_use() {
             for (( i=0; i<${#accumulator[@]}; i+=2 ))
             do
                 local __key __val
-                __key="${accumulator[i]}"
-                __val="${accumulator[i+1]}"
+
+                if [[ -n $ZSH_VERSION ]]; then
+                    __key="${accumulator[i+1]}"
+                    __val="${accumulator[i+2]}"
+                else
+                    __key="${accumulator[i]}"
+                    __val="${accumulator[i+1]}"
+                fi
+
                 options_hash=( $(setValueForKeyFakeAssocArray "${__key}" "${__val}" "${options_hash[*]}") )
                 unset __key __val
             done

@@ -4,7 +4,7 @@
 [[ ${GVM_SHELL_COMPAT:-} -eq 1 ]] && return || readonly GVM_SHELL_COMPAT=1
 
 # force zsh to start arrays at index 0
-[[ -n $ZSH_VERSION ]] && setopt KSH_ARRAYS
+# [[ -n $ZSH_VERSION ]] && setopt KSH_ARRAYS
 
 # __gvm_is_function()
 # /*!
