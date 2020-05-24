@@ -60,36 +60,57 @@ __gvm_callstack() {
 #   otherwise failure (status 1).
 # */
 
+
 __gvm_rematch() {
+    if [[ -n $ZSH_VERSION ]]; then
+        setopt KSH_ARRAYS
+        setopt BASH_REMATCH
+    fi
+
     local string="${1}"; shift
     local regex="${1}"; shift
     local var_name="${1:-GVM_REMATCH}"
     local rematch_ary; rematch_ary=()
 
-    [[ ${#string} -eq 0 ]] && return 1
-    [[ ${#regex} -eq 0 ]] && return 1
+    if [[ ${#string} -eq 0 ]];then
+        if [[ -n $ZSH_VERSION ]]; then
+            unsetopt KSH_ARRAYS
+            unsetopt BASH_REMATCH
+        fi
+        return 1
+    fi
+    if [[ ${#regex} -eq 0 ]]; then
+        if [[ -n $ZSH_VERSION ]]; then
+            unsetopt KSH_ARRAYS
+            unsetopt BASH_REMATCH
+        fi
+        return 1
+    fi
 
     # perform regex - same on bash and ksh
     [[ "${string}" =~ $regex ]]
-    [[ $? -ne 0 ]] && return 1
-
+    if [[ $? -ne 0 ]];then
+        if [[ -n $ZSH_VERSION ]]; then
+            unsetopt KSH_ARRAYS
+            unsetopt BASH_REMATCH
+        fi
+        return 1
+    fi
     # support bash and zsh
     #
     # NOTE: 'setopt KSH_ARRAYS' must be set for zsh to force array indexes to
     # start at 0, like bash.
     #
-    if [[ "x${BASH_VERSION}" != "x" ]]; then
-        rematch_ary+=( "${BASH_REMATCH[@]}" )
-    elif [[ "x${ZSH_VERSION}" != "x" ]]; then
-        rematch_ary+=( "$MATCH" "${match[@]}" )
-    else
-        return 1
-    fi
+    rematch_ary+=( "${BASH_REMATCH[@]}" )
 
     if [[ "${var_name}" != "$" ]]; then
         # assign to passed var
         eval "${var_name}=( \"\${rematch_ary[@]}\" )"
     fi
 
+    if [[ -n $ZSH_VERSION ]]; then
+        unsetopt KSH_ARRAYS
+        unsetopt BASH_REMATCH
+    fi
     return 0
 }
