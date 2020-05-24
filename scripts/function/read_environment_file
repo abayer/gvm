@@ -24,13 +24,21 @@
 #   or an empty string (status 1) on failure.
 # */
 __gvm_read_environment_file() {
+    if [[ -n $ZSH_VERSION ]]; then
+        setopt KSH_ARRAYS
+        setopt BASH_REMATCH
+    fi
+
     local filepath="${1}"
     local regex='^export ([^[:digit:]]+[[:alnum:]_]+);[[:space:]]*([^[:digit:]]+[[:alnum:]_]+=(.*))$'
     local hash; hash=()
 
-    echo "filepath => $filepath"
-
     if [[ -z "${filepath}" || ! -r "${filepath}" ]]; then
+        echo ""
+        if [[ -n $ZSH_VERSION ]]; then
+            unsetopt KSH_ARRAYS
+            unsetopt BASH_REMATCH
+        fi
         return 1
     fi
 
@@ -53,11 +61,19 @@ __gvm_read_environment_file() {
         unset __key __val
     done <<< "$(cat "${filepath}")"
 
-    echo "=========   ${hash[@]}    ========="
+    echo "${hash[@]}"
 
     if [[ ${#hash[@]} -eq 0 ]]; then
+        if [[ -n $ZSH_VERSION ]]; then
+            unsetopt KSH_ARRAYS
+            unsetopt BASH_REMATCH
+        fi
         return 1
     fi
 
+    if [[ -n $ZSH_VERSION ]]; then
+        unsetopt KSH_ARRAYS
+        unsetopt BASH_REMATCH
+    fi
     return 0
 }
