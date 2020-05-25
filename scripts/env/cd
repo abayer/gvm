@@ -118,14 +118,12 @@ cd() {
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Found dot_go_version: ${dot_go_version}"
         local use_goversion="$(__gvmp_read_dot_go_version "${dot_go_version}")"
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Switching to: ${use_goversion}"
-
-        # gvm use --quiet "${use_goversion}" || return 1
         gvm use "${use_goversion}" || return 1
         unset use_goversion
     elif [[ -n "${defaults_go_name}" ]]; then
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "No .go-version found. Using system or default go."
         # gvm use --quiet "${defaults_go_name}" || return 1
-        gvm use "${defaults_go_name}" || return 1
+        # gvm use "${defaults_go_name}" || return 1
     else
         # quietly failing
         if [[ "${GVM_DEBUG}" -eq 1 ]]; then
@@ -148,12 +146,12 @@ cd() {
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Found .go-pkgset: ${dot_go_pkgset}"
         local use_gopkgset="$(__gvmp_read_dot_go_pkgset "${dot_go_pkgset}")"
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Switching to: ${use_gopkgset}"
-        gvm pkgset use --quiet "${use_gopkgset}" || return 1
+        gvm pkgset use "${use_gopkgset}" || return 1
         unset use_gopkgset
     elif [[ -n "${defaults_go_pkgset}" ]];then
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "No .go-pkgset found. Using system or default pkgset."
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "----------    defaults_go_pkgset => $defaults_go_pkgset     ----------"
-        gvm pkgset use --quiet "${defaults_go_pkgset}" || return 1
+        # gvm pkgset use --quiet "${defaults_go_pkgset}" || return 1
     else
         # quietly failing
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "No fallback pkgset could be found."

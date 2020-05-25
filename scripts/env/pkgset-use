@@ -228,7 +228,7 @@ gvm_pkgset_use() {
             gvm use --quiet $gvm_go_name
             [[ "${GVM_DEBUG}" -eq 1 ]] && echo ">>>>>>>>   gvm pkgset create $pkgset   <<<<<<<"
             gvm pkgset create $pkgset
-            gvm pkgset use $pkgset
+            gvm pkgset use --quiet $pkgset
         fi
 
         gvm_export_path
