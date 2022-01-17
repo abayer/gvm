@@ -49,7 +49,7 @@ cd() {
         __gvm_oldcd $*
     fi
 
-    local dot_go_version dot_go_pkgset rslt
+    local dot_go_version dot_go_pkgset go_mod_file rslt mod_rslt
     local defaults_go_name defaults_go_pkgset
     local defaults_resolved=false
     local defaults_hash; defaults_hash=()
@@ -106,22 +106,32 @@ cd() {
         echo "Resolved default pkgset: ${defaults_go_pkgset:-[EMPTY]}"
     fi
 
+    go_mod_file="$(__gvmp_find_closest_go_mod)"
+    mod_rslt=$?
+
     dot_go_version="$(__gvmp_find_closest_dot_go_version)"
     rslt=$?
 
     [[ "${GVM_DEBUG}" -eq 1 ]] && echo "---------------------------------------"
+    [[ "${GVM_DEBUG}" -eq 1 ]] && echo "go_mod_file => $go_mod_file"
     [[ "${GVM_DEBUG}" -eq 1 ]] && echo "dot_go_version => $dot_go_version"
     [[ "${GVM_DEBUG}" -eq 1 ]] && echo "defaults_go_name => $defaults_go_name"
     [[ "${GVM_DEBUG}" -eq 1 ]] && echo "---------------------------------------"
 
-    if [[ $rslt -eq 0 ]]; then
+    if [[ $mod_rslt -eq 0 ]]; then
+        [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Found go_mod_file: ${go_mod_file}"
+        local use_goversion="$(__gvmp_read_go_mod "${go_mod_file}")"
+        [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Switching to: ${use_goversion}"
+        gvm use "${use_goversion}" || return 1
+        unset use_goversion
+    elif [[ $rslt -eq 0 ]]; then
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Found dot_go_version: ${dot_go_version}"
         local use_goversion="$(__gvmp_read_dot_go_version "${dot_go_version}")"
         [[ "${GVM_DEBUG}" -eq 1 ]] && echo "Switching to: ${use_goversion}"
         gvm use "${use_goversion}" || return 1
         unset use_goversion
     elif [[ -n "${defaults_go_name}" ]]; then
-        [[ "${GVM_DEBUG}" -eq 1 ]] && echo "No .go-version found. Using system or default go."
+        [[ "${GVM_DEBUG}" -eq 1 ]] && echo "No go.mod or .go-version found. Using system or default go."
         # gvm use --quiet "${defaults_go_name}" || return 1
         # gvm use "${defaults_go_name}" || return 1
     else
@@ -160,6 +170,15 @@ cd() {
     return 0
 }
 
+__gvmp_find_closest_go_mod() {
+    local resp rslt
+
+    resp="$(__gvm_find_path_upwards "go.mod")"
+    rslt=$?
+
+    echo "${resp}"; return $rslt
+}
+
 __gvmp_find_closest_dot_go_version() {
     local resp rslt
 
@@ -176,6 +195,31 @@ __gvmp_find_closest_dot_go_pkgset() {
     rslt=$?
 
     echo "${resp}"; return $rslt
+}
+
+__gvmp_read_go_mod() {
+    local filepath="${1}"
+    local version=""
+    local regex='^go ([0-9]+\.[0-9]+)$'
+
+    while IFS=$'\n' read -r _line; do
+        # skip comment lines
+        [[ "${_line}" =~ \#.* ]] && continue
+
+        # looking for pattern "go 1.2[.3]"
+        if [[ "${_line}" =~ $regex ]]; then
+          version="go${_line:3}"
+          break
+        fi
+    done <<< "$(cat "${filepath}")"
+
+    echo "${version}"
+
+    if [[ -z "${version}" ]]; then
+        return 1
+    fi
+
+    return 0
 }
 
 __gvmp_read_dot_go_version() {
